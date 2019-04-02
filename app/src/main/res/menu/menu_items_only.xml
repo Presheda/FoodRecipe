@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:icon="@drawable/ic_search_black_24dp"
+        android:id="@+id/action_recipe_search"
+        android:checkable="true"
+        android:title="@string/Search"/>
+
+
+
+
+    <item
+        android:icon="@drawable/ic_about_black_24dp"
+        android:id="@+id/action_about"
+        android:checkable="true"
+        android:title="@string/about"/>
+
+</menu>
