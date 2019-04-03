@@ -10,8 +10,11 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.StrictMode;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.annotation.VisibleForTesting;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
+import android.support.test.espresso.IdlingResource;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.SearchView;
@@ -27,6 +30,7 @@ import android.view.inputmethod.InputMethodManager;
 import com.precious.foodrecipe.R;
 import com.precious.foodrecipe.databinding.ActivityLandingPageBinding;
 import com.precious.foodrecipe.model.ConstantsVariables;
+import com.precious.foodrecipe.model.FoodRecipeIdlingResource;
 import com.precious.foodrecipe.model.RecipeMain;
 import com.precious.foodrecipe.services.RecipeService;
 import com.precious.foodrecipe.services.RecipeServiceBuilder;
@@ -44,6 +48,7 @@ public class LandingPageActivity extends AppCompatActivity implements Navigation
     public static final String SEARCHED_ITEM = "SEARCHED_ITEM";
     ActivityLandingPageBinding mLandingPageBinding;
     private AlertDialog mDialog;
+    private FoodRecipeIdlingResource mIdlingResource;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,8 +71,19 @@ public class LandingPageActivity extends AppCompatActivity implements Navigation
 //                .build()
 //        );
 
+        getIdlingResource();
 
+    }
 
+    @VisibleForTesting
+    @Nullable
+    public IdlingResource getIdlingResource(){
+
+        if(mIdlingResource == null){
+            mIdlingResource = new FoodRecipeIdlingResource();
+        }
+
+        return  mIdlingResource;
     }
 
     private void visitEdamam() {
@@ -181,6 +197,7 @@ public class LandingPageActivity extends AppCompatActivity implements Navigation
 
     private void loadBackground(final String s) {
 
+        mIdlingResource.setIdleState(false);
 
         RecipeService recipeService = RecipeServiceBuilder.buidService(RecipeService.class);
 
@@ -202,16 +219,16 @@ public class LandingPageActivity extends AppCompatActivity implements Navigation
         request.enqueue(new Callback<RecipeMain>() {
             @Override
             public void onResponse(Call<RecipeMain> call, Response<RecipeMain> response) {
-                mDialog.cancel();
-
+               // mDialog.cancel();
+                mIdlingResource.setIdleState(true);
                 if (response.isSuccessful()) {
                     if (response.body() != null) {
                         final Intent i = new Intent(LandingPageActivity.this, MainActivity.class);
                         i.putExtra(MainActivity.RECIPE_KEY, response.body());
                         i.putExtra(SEARCHED_ITEM, s);
                         final ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(LandingPageActivity.this);
-                        startActivity(i, options.toBundle());
 
+                        startActivity(i, options.toBundle());
 
 
                     }
@@ -225,8 +242,9 @@ public class LandingPageActivity extends AppCompatActivity implements Navigation
 
             @Override
             public void onFailure(Call<RecipeMain> call, Throwable t) {
+                mIdlingResource.setIdleState(true);
                 mDialog.cancel();
-                String snackBarMessag="";
+                String snackBarMessag="ERROR LOADING RECIPE";
 
                 if(t instanceof ConnectException){
                     snackBarMessag = "Unable to connect please check internet";
