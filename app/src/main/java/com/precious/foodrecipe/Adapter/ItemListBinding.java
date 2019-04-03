@@ -36,21 +36,30 @@ public class ItemListBinding {
     }
 
     @BindingAdapter("setimageUrl")
-    public static void setimageUrl(ImageView imageView, RecipeMain.Recipe recipe){
+    public static void setimageUrl( final ImageView imageView, final RecipeMain.Recipe recipe){
         if(recipe == null){
             return;
         }
 
-        Context context  = imageView.getContext();
+       final Context context  = imageView.getContext();
 
-        RequestOptions options  = new RequestOptions()
+       final RequestOptions options  = new RequestOptions()
                 .placeholder(R.drawable.ic_launcher_background)
                 .error(R.drawable.ic_launcher_background);
 
-        Glide.with(context)
-                .setDefaultRequestOptions(options)
-                .load(recipe.getImage())
-                .into(imageView);
+
+       Runnable runnable = new Runnable() {
+           @Override
+           public void run() {
+
+               Glide.with(context)
+                       .setDefaultRequestOptions(options)
+                       .load(recipe.getImage())
+                       .into(imageView);
+           }
+       };
+
+       runnable.run();
 
     }
 }

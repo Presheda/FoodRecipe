@@ -1,11 +1,15 @@
 package com.precious.foodrecipe.app;
 
+import android.content.Intent;
 import android.databinding.DataBindingUtil;
+import android.net.Uri;
+import android.os.StrictMode;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.transition.Slide;
 import android.view.Gravity;
+import android.view.View;
 import android.view.Window;
 import android.widget.Toast;
 
@@ -35,7 +39,6 @@ public class RecipeDetailActivity extends AppCompatActivity {
         Bundle extras = getIntent().getExtras();
 
         if(mRecipe != null){
-            Toast.makeText(this, "Parcelable successful = " + mRecipe.getLabel(), Toast.LENGTH_SHORT).show();
             mBinding.setRecipe(mRecipe);
 
         }
@@ -55,6 +58,34 @@ public class RecipeDetailActivity extends AppCompatActivity {
                 .into(mBinding.imageViewDetail);
 
         setupToolBar();
+
+
+        visitSource();
+//
+//
+//        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+//                .detectDiskReads()
+//                .detectDiskWrites()
+//                .detectNetwork()
+//                .penaltyLog()
+//                .build()
+//        );
+
+    }
+
+    private void visitSource() {
+        mBinding.detailNested.viewSource.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String url = mRecipe.getUrl();
+                Uri webPage = Uri.parse(url);
+                Intent intent = new Intent(Intent.ACTION_VIEW, webPage);
+                if(intent.resolveActivity(getPackageManager()) != null){
+                    startActivity(intent);
+                }
+
+            }
+        });
     }
 
     private void setupToolBar() {

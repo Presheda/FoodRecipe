@@ -1,8 +1,12 @@
 package com.precious.foodrecipe.Adapter;
 
+import android.content.Intent;
 import android.databinding.BindingAdapter;
+import android.net.Uri;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.precious.foodrecipe.model.RecipeMain;
@@ -82,4 +86,6 @@ public class DetailNestedAdapter {
 
         textView.setText(calories);
     }
+
+
 }

@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.StrictMode;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.view.ViewCompat;
@@ -37,8 +38,6 @@ import com.precious.foodrecipe.services.RecipeServiceBuilder;
 
 import java.io.IOException;
 import java.net.ConnectException;
-import java.util.ArrayList;
-import java.util.List;
 
 import dmax.dialog.SpotsDialog;
 import retrofit2.Call;
@@ -81,6 +80,14 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
         setupWindowAnimation();
 
         initEndlessScroll();
+//
+//        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+//                .detectDiskReads()
+//                .detectDiskWrites()
+//                .detectNetwork()
+//                .penaltyLog()
+//                .build()
+//        );
 
 
     }
@@ -145,14 +152,22 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
         }
     }
 
-    private void setupRecyclerView(RecipeMain recipeMain) {
-        mListAdapter = new RecipeListAdapter(MainActivity.this, recipeMain.getHits(), MainActivity.this);
-        mLayoutManager = new GridLayoutManager(MainActivity.this, 2);
+    private void setupRecyclerView(final RecipeMain recipeMain) {
+
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                mListAdapter = new RecipeListAdapter(MainActivity.this, recipeMain.getHits(), MainActivity.this);
+                mLayoutManager = new GridLayoutManager(MainActivity.this, 2);
 
 
-        mBinding.recipeRecyclerView.setLayoutManager(mLayoutManager);
-        mBinding.recipeRecyclerView.setAdapter(mListAdapter);
-        mBinding.setHitList(recipeMain.getHits());
+                mBinding.recipeRecyclerView.setLayoutManager(mLayoutManager);
+                mBinding.recipeRecyclerView.setAdapter(mListAdapter);
+                mBinding.setHitList(recipeMain.getHits());
+            }
+        };
+
+        runnable.run();
     }
 
 
@@ -163,7 +178,7 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
 
         MenuItem menuItem = (MenuItem) menu.findItem(R.id.action_search);
 
-        SearchView searchView = (SearchView) menuItem.getActionView();
+        final SearchView searchView = (SearchView) menuItem.getActionView();
 
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
@@ -179,9 +194,11 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
                 }, 1000);
 
 
-
-
                 requery(s, 0, false);
+
+                getSupportActionBar().setTitle(s);
+
+
                 return true;
             }
 
@@ -237,95 +254,94 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
     private void requery(final String s, final int fromRange, final boolean loadMore) {
 
 
+        RecipeService recipeService = RecipeServiceBuilder.buidService(RecipeService.class);
 
 
-                RecipeService recipeService = RecipeServiceBuilder.buidService(RecipeService.class);
+        Call<RecipeMain> request = recipeService.searchRecicpe(
+                s,
+                ConstantsVariables.APP_ID,
+                ConstantsVariables.APP_KEY,
+                fromRange,
+                fromRange + 20
 
 
-
-                Call<RecipeMain> request = recipeService.searchRecicpe(
-                        s,
-                        ConstantsVariables.APP_ID,
-                        ConstantsVariables.APP_KEY,
-                        fromRange,
-                        fromRange + 20
+        );
 
 
-                );
+        request.enqueue(new Callback<RecipeMain>() {
+            @Override
+            public void onResponse(Call<RecipeMain> call, Response<RecipeMain> response) {
+
+                mDialog.cancel();
+                scrollListener.resetState();
+
+                if (response.isSuccessful()) {
+                    if (response.body() != null) {
+
+                        mRecipeMain = response.body();
+
+                        response.toString();
 
 
+                        if (loadMore) {
 
+                          Runnable runnable = new Runnable() {
+                              @Override
+                              public void run() {
+                                  int size = mRecipeMain.getHits().size();
+                                  for (int i = 0; i < size; i++) {
+                                      mListAdapter.addHitsItem(mRecipeMain.getHits().get(i));
+                                  }
+                              }
+                          };
 
-
-
-
-                request.enqueue(new Callback<RecipeMain>() {
-                    @Override
-                    public void onResponse(Call<RecipeMain> call, Response<RecipeMain> response) {
-
-                        mDialog.cancel();
-                        scrollListener.resetState();
-
-                        if (response.isSuccessful()) {
-                            if (response.body() != null) {
-
-                                mRecipeMain = response.body();
-
-                                response.toString();
-
-
-                                if (loadMore) {
-
-                                    int size = mRecipeMain.getHits().size();
-                                    for (int i = 0; i < size; i++) {
-                                        mListAdapter.addHitsItem(mRecipeMain.getHits().get(i));
-                                    }
-
-                                    mBinding.loadMore.setVisibility(View.GONE);
-
-                                } else {
-
-                                    setupRecyclerView(mRecipeMain);
-                                    initEndlessScroll();
-
-
-                                }
-                            }
-                        }
-
-                        else if(response.code() > 200 ) {
-
-                            String snackBarMessage = "Api Limits exceeded or Server Error";
-
-                            showSnackbar(snackBarMessage);
+                          runnable.run();
 
                             mBinding.loadMore.setVisibility(View.GONE);
+
+                        } else {
+
+                            setupRecyclerView(mRecipeMain);
+                            initEndlessScroll();
+
+
                         }
-
-                        response.code();
-
-
-
                     }
+                } else if (response.code() > 200) {
 
-                    @Override
-                    public void onFailure(Call<RecipeMain> call, Throwable t) {
-                        Log.v("MainActivity", "instance of IOE Exception was received");
-                        mBinding.loadMore.setVisibility(View.GONE);
-                        mDialog.cancel();
-                        scrollListener.resetState();
+                    String snackBarMessage = "Api Limits exceeded or Server Error";
 
-                        String snackBarMessag="";
+                    showSnackbar(snackBarMessage);
 
-                        if(t instanceof ConnectException){
-                          snackBarMessag = "Unable to connect please check internet";
-                        }
+                    mBinding.loadMore.setVisibility(View.GONE);
+                }
 
-                        showSnackbar(snackBarMessag);
+                response.code();
 
-                    }
-                });
 
+            }
+
+            @Override
+            public void onFailure(Call<RecipeMain> call, Throwable t) {
+                Log.v("MainActivity", "instance of IOE Exception was received");
+                mBinding.loadMore.setVisibility(View.GONE);
+                mDialog.cancel();
+                scrollListener.resetState();
+
+                String snackBarMessag = "Error encountered";
+
+                if (t instanceof ConnectException) {
+                    snackBarMessag = "Unable to connect please check internet";
+                }
+
+                if (t instanceof IOException) {
+                    snackBarMessag = "IOE exception encountered";
+                }
+
+                showSnackbar(snackBarMessag);
+
+            }
+        });
 
 
     }

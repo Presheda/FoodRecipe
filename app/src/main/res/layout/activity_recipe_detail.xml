@@ -65,12 +65,12 @@
         bind:Secondrecipe="@{recipe}"
         />
 
-    <android.support.design.widget.FloatingActionButton
-        android:layout_margin="16dp"
-        app:layout_anchor="@+id/collapsingToolbar"
-        app:layout_anchorGravity="bottom|end"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content" />
+    <!--<android.support.design.widget.FloatingActionButton-->
+        <!--android:layout_margin="16dp"-->
+        <!--app:layout_anchor="@+id/collapsingToolbar"-->
+        <!--app:layout_anchorGravity="bottom|end"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content" />-->
 
 
 

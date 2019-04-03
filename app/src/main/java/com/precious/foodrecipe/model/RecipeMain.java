@@ -208,7 +208,7 @@ public  class RecipeMain implements Parcelable {
         private TotalNutrients totalNutrients;
         @Expose
         @SerializedName("totalTime")
-        private int totalTime;
+        private double totalTime;
         @Expose
         @SerializedName("totalWeight")
         private double totalWeight;
@@ -276,11 +276,11 @@ public  class RecipeMain implements Parcelable {
             this.totalNutrients = totalNutrients;
         }
 
-        public int getTotalTime() {
+        public double getTotalTime() {
             return totalTime;
         }
 
-        public void setTotalTime(int totalTime) {
+        public void setTotalTime(double totalTime) {
             this.totalTime = totalTime;
         }
 
@@ -411,6 +411,7 @@ public  class RecipeMain implements Parcelable {
             parcel.writeDouble(totalTime);
             parcel.writeDouble(totalWeight);
             parcel.writeString(image);
+            parcel.writeString(url);
 
 
 
@@ -425,6 +426,7 @@ public  class RecipeMain implements Parcelable {
             totalTime = (int) parcelable.readDouble();
             totalWeight = parcelable.readDouble();
             image = parcelable.readString();
+            url = parcelable.readString();
 
 
         }

@@ -5,8 +5,10 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.StrictMode;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
@@ -54,6 +56,32 @@ public class LandingPageActivity extends AppCompatActivity implements Navigation
         setupTransition();
 
 
+        visitEdamam();
+
+//        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+//                .detectDiskReads()
+//                .detectDiskWrites()
+//                .detectNetwork()
+//                .penaltyLog()
+//                .build()
+//        );
+
+
+
+    }
+
+    private void visitEdamam() {
+        mLandingPageBinding.visitEdamam.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String url = "https://www.edamam.com";
+                Uri webPage = Uri.parse(url);
+                Intent intent = new Intent(Intent.ACTION_VIEW, webPage);
+                if(intent.resolveActivity(getPackageManager()) != null){
+                    startActivity(intent);
+                }
+            }
+        });
     }
 
     private void setupTransition() {
@@ -227,9 +255,13 @@ public class LandingPageActivity extends AppCompatActivity implements Navigation
 
         switch (id) {
             case R.id.action_recipe_search:
+                mLandingPageBinding.aboutLayout.setVisibility(View.GONE);
+                mLandingPageBinding.searchLayout.setVisibility(View.VISIBLE);
                 break;
 
             case R.id.action_about:
+                mLandingPageBinding.searchLayout.setVisibility(View.GONE);
+                mLandingPageBinding.aboutLayout.setVisibility(View.VISIBLE);
                 break;
 
         }

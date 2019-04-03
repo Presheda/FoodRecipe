@@ -6,4 +6,5 @@
     <string name="drawer_close">Close</string>
     <string name="app_desc">Search Over 1.5 million food recipe with detail nutritional information</string>
     <string name="about">About</string>
+    <string name="app_about">Powered by the Edamam Recipe Api, This App exposes over 1.5 million food recipe by providing search functionality.</string>
 </resources>
