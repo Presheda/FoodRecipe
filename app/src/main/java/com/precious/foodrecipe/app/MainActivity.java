@@ -16,6 +16,7 @@ import android.support.v7.widget.SearchView;
 import android.transition.Slide;
 import android.transition.Transition;
 import android.transition.TransitionInflater;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -33,6 +34,11 @@ import com.precious.foodrecipe.model.EndlessRecyclerViewScrollListener;
 import com.precious.foodrecipe.model.RecipeMain;
 import com.precious.foodrecipe.services.RecipeService;
 import com.precious.foodrecipe.services.RecipeServiceBuilder;
+
+import java.io.IOException;
+import java.net.ConnectException;
+import java.util.ArrayList;
+import java.util.List;
 
 import dmax.dialog.SpotsDialog;
 import retrofit2.Call;
@@ -74,6 +80,12 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
 
         setupWindowAnimation();
 
+        initEndlessScroll();
+
+
+    }
+
+    private void initEndlessScroll() {
         scrollListener = new EndlessRecyclerViewScrollListener(mLayoutManager) {
             @Override
             public void onLoadMore(int page, int totalItemsCount, RecyclerView view) {
@@ -86,8 +98,6 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
         };
 
         mBinding.recipeRecyclerView.addOnScrollListener(scrollListener);
-
-
     }
 
     private void setupWindowAnimation() {
@@ -224,68 +234,104 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
     }
 
 
-    private void requery(final String s, int fromRange, final boolean loadMore) {
+    private void requery(final String s, final int fromRange, final boolean loadMore) {
 
 
-        RecipeService recipeService = RecipeServiceBuilder.buidService(RecipeService.class);
-        Call<RecipeMain> request = recipeService.searchRecicpe(
-                s,
-                ConstantsVariables.APP_ID,
-                ConstantsVariables.APP_KEY,
-                fromRange,
-                fromRange + 20
 
 
-        );
+                RecipeService recipeService = RecipeServiceBuilder.buidService(RecipeService.class);
 
 
-        final Snackbar snackbar = Snackbar.make(mBinding.coordinatorLayout,
-                "Unable to fetch data please check network and try again", Snackbar.LENGTH_LONG);
+
+                Call<RecipeMain> request = recipeService.searchRecicpe(
+                        s,
+                        ConstantsVariables.APP_ID,
+                        ConstantsVariables.APP_KEY,
+                        fromRange,
+                        fromRange + 20
 
 
-        request.enqueue(new Callback<RecipeMain>() {
-            @Override
-            public void onResponse(Call<RecipeMain> call, Response<RecipeMain> response) {
+                );
 
-                mDialog.cancel();
 
-                if (response.isSuccessful()) {
-                    if (response.body() != null) {
 
-                        mRecipeMain = response.body();
 
-                        if (loadMore) {
 
-                            int size = mRecipeMain.getHits().size();
-                            for (int i = 0; i < size; i++) {
-                                mListAdapter.addHitsItem(mRecipeMain.getHits().get(i));
+
+
+                request.enqueue(new Callback<RecipeMain>() {
+                    @Override
+                    public void onResponse(Call<RecipeMain> call, Response<RecipeMain> response) {
+
+                        mDialog.cancel();
+                        scrollListener.resetState();
+
+                        if (response.isSuccessful()) {
+                            if (response.body() != null) {
+
+                                mRecipeMain = response.body();
+
+                                response.toString();
+
+
+                                if (loadMore) {
+
+                                    int size = mRecipeMain.getHits().size();
+                                    for (int i = 0; i < size; i++) {
+                                        mListAdapter.addHitsItem(mRecipeMain.getHits().get(i));
+                                    }
+
+                                    mBinding.loadMore.setVisibility(View.GONE);
+
+                                } else {
+
+                                    setupRecyclerView(mRecipeMain);
+                                    initEndlessScroll();
+
+
+                                }
                             }
+                        }
+
+                        else if(response.code() > 200 ) {
+
+                            String snackBarMessage = "Api Limits exceeded or Server Error";
+
+                            showSnackbar(snackBarMessage);
 
                             mBinding.loadMore.setVisibility(View.GONE);
-                            scrollListener.resetState();
-                        } else {
-
-                            setupRecyclerView(mRecipeMain);
-
-
                         }
+
+                        response.code();
+
+
+
                     }
-                }
 
-                else {
-                    snackbar.show();
-                }
+                    @Override
+                    public void onFailure(Call<RecipeMain> call, Throwable t) {
+                        Log.v("MainActivity", "instance of IOE Exception was received");
+                        mBinding.loadMore.setVisibility(View.GONE);
+                        mDialog.cancel();
+                        scrollListener.resetState();
 
-            }
+                        String snackBarMessag="";
 
-            @Override
-            public void onFailure(Call<RecipeMain> call, Throwable t) {
-                mBinding.loadMore.setVisibility(View.GONE);
-                mDialog.cancel();
-                snackbar.show();
+                        if(t instanceof ConnectException){
+                          snackBarMessag = "Unable to connect please check internet";
+                        }
 
-            }
-        });
+                        showSnackbar(snackBarMessag);
+
+                    }
+                });
+
+
+
+    }
+
+    private void showSnackbar(String snackBarMessage) {
+        Snackbar.make(mBinding.coordinatorLayout, snackBarMessage, Snackbar.LENGTH_LONG).show();
     }
 
 

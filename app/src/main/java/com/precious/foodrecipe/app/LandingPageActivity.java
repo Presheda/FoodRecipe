@@ -16,6 +16,7 @@ import android.support.v7.widget.SearchView;
 import android.transition.Slide;
 import android.transition.Transition;
 import android.transition.TransitionInflater;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
@@ -27,6 +28,8 @@ import com.precious.foodrecipe.model.ConstantsVariables;
 import com.precious.foodrecipe.model.RecipeMain;
 import com.precious.foodrecipe.services.RecipeService;
 import com.precious.foodrecipe.services.RecipeServiceBuilder;
+
+import java.net.ConnectException;
 
 import dmax.dialog.SpotsDialog;
 import retrofit2.Call;
@@ -163,6 +166,8 @@ public class LandingPageActivity extends AppCompatActivity implements Navigation
 
         );
 
+        request.request().header("close");
+
         final Snackbar snackbar = Snackbar.make(mLandingPageBinding.coordinatorLayout,
                 "Unable to fetch data please check network and try again", Snackbar.LENGTH_LONG);
 
@@ -170,27 +175,22 @@ public class LandingPageActivity extends AppCompatActivity implements Navigation
             @Override
             public void onResponse(Call<RecipeMain> call, Response<RecipeMain> response) {
                 mDialog.cancel();
+
                 if (response.isSuccessful()) {
                     if (response.body() != null) {
                         final Intent i = new Intent(LandingPageActivity.this, MainActivity.class);
                         i.putExtra(MainActivity.RECIPE_KEY, response.body());
                         i.putExtra(SEARCHED_ITEM, s);
-
                         final ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(LandingPageActivity.this);
+                        startActivity(i, options.toBundle());
 
 
-                        Handler handler = new Handler();
-
-                        handler.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                startActivity(i, options.toBundle());
-                            }
-                        }, 500);
 
                     }
                 } else {
-                    snackbar.show();
+                    String snackBarMessage = "Api Limits exceeded or Server Error";
+
+                    showSnackbar(snackBarMessage);
                 }
 
             }
@@ -198,11 +198,21 @@ public class LandingPageActivity extends AppCompatActivity implements Navigation
             @Override
             public void onFailure(Call<RecipeMain> call, Throwable t) {
                 mDialog.cancel();
+                String snackBarMessag="";
 
-                snackbar.show();
+                if(t instanceof ConnectException){
+                    snackBarMessag = "Unable to connect please check internet";
+                }
+
+                showSnackbar(snackBarMessag);
+
 
             }
         });
+    }
+
+    private void showSnackbar(String snackBarMessage) {
+        Snackbar.make(mLandingPageBinding.coordinatorLayout, snackBarMessage, Snackbar.LENGTH_LONG).show();
     }
 
     @Override
