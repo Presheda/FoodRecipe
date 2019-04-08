@@ -8,6 +8,7 @@ import android.databinding.DataBindingUtil;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.StrictMode;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -30,7 +31,9 @@ import android.view.inputmethod.InputMethodManager;
 import com.precious.foodrecipe.R;
 import com.precious.foodrecipe.databinding.ActivityLandingPageBinding;
 import com.precious.foodrecipe.model.ConstantsVariables;
+import com.precious.foodrecipe.model.FoodExecutor;
 import com.precious.foodrecipe.model.FoodRecipeIdlingResource;
+import com.precious.foodrecipe.model.LoadBackgound;
 import com.precious.foodrecipe.model.RecipeMain;
 import com.precious.foodrecipe.services.RecipeService;
 import com.precious.foodrecipe.services.RecipeServiceBuilder;
@@ -42,9 +45,11 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class LandingPageActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
+public class LandingPageActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener
 
-    public static final String SHEARED_SEARCH_VIEW = "shearedSearchView";
+       {
+
+
     public static final String SEARCHED_ITEM = "SEARCHED_ITEM";
     ActivityLandingPageBinding mLandingPageBinding;
     private AlertDialog mDialog;
@@ -164,24 +169,13 @@ public class LandingPageActivity extends AppCompatActivity implements Navigation
 
                 hideKeyboard(getApplicationContext());
 
-                mDialog.show();
-
-                loadBackground(s);
 
 
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
+               Intent intent = new Intent(LandingPageActivity.this, MainActivity.class);
+               intent.putExtra(SEARCHED_ITEM, s);
+               startActivity(intent);
 
-                    }
-                }, 1000);
 
-                new Handler().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-
-                    }
-                }, 1500);
 
                 return true;
             }
@@ -194,68 +188,68 @@ public class LandingPageActivity extends AppCompatActivity implements Navigation
 
     }
 
-
-    private void loadBackground(final String s) {
-
-        mIdlingResource.setIdleState(false);
-
-        RecipeService recipeService = RecipeServiceBuilder.buidService(RecipeService.class);
-
-        Call<RecipeMain> request = recipeService.searchRecicpe(
-                s,
-                ConstantsVariables.APP_ID,
-                ConstantsVariables.APP_KEY,
-                0,
-                20
-
-
-        );
-
-        request.request().header("close");
-
-        final Snackbar snackbar = Snackbar.make(mLandingPageBinding.coordinatorLayout,
-                "Unable to fetch data please check network and try again", Snackbar.LENGTH_LONG);
-
-        request.enqueue(new Callback<RecipeMain>() {
-            @Override
-            public void onResponse(Call<RecipeMain> call, Response<RecipeMain> response) {
-               // mDialog.cancel();
-                mIdlingResource.setIdleState(true);
-                if (response.isSuccessful()) {
-                    if (response.body() != null) {
-                        final Intent i = new Intent(LandingPageActivity.this, MainActivity.class);
-                        i.putExtra(MainActivity.RECIPE_KEY, response.body());
-                        i.putExtra(SEARCHED_ITEM, s);
-                        final ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(LandingPageActivity.this);
-
-                        startActivity(i, options.toBundle());
-
-
-                    }
-                } else {
-                    String snackBarMessage = "Api Limits exceeded or Server Error";
-
-                    showSnackbar(snackBarMessage);
-                }
-
-            }
-
-            @Override
-            public void onFailure(Call<RecipeMain> call, Throwable t) {
-                mIdlingResource.setIdleState(true);
-                mDialog.cancel();
-                String snackBarMessag="ERROR LOADING RECIPE";
-
-                if(t instanceof ConnectException){
-                    snackBarMessag = "Unable to connect please check internet";
-                }
-
-                showSnackbar(snackBarMessag);
-
-
-            }
-        });
-    }
+//
+//    private void loadBackground(final String s) {
+//
+//        mIdlingResource.setIdleState(false);
+//
+//        RecipeService recipeService = RecipeServiceBuilder.buidService(RecipeService.class);
+//
+//        Call<RecipeMain> request = recipeService.searchRecicpe(
+//                s,
+//                ConstantsVariables.APP_ID,
+//                ConstantsVariables.APP_KEY,
+//                0,
+//                20
+//
+//
+//        );
+//
+//        request.request().header("close");
+//
+//        final Snackbar snackbar = Snackbar.make(mLandingPageBinding.coordinatorLayout,
+//                "Unable to fetch data please check network and try again", Snackbar.LENGTH_LONG);
+//
+//        request.enqueue(new Callback<RecipeMain>() {
+//            @Override
+//            public void onResponse(Call<RecipeMain> call, Response<RecipeMain> response) {
+//               // mDialog.cancel();
+//                mIdlingResource.setIdleState(true);
+//                if (response.isSuccessful()) {
+//                    if (response.body() != null) {
+//                        final Intent i = new Intent(LandingPageActivity.this, MainActivity.class);
+//                        i.putExtra(MainActivity.RECIPE_KEY, response.body());
+//                        i.putExtra(SEARCHED_ITEM, s);
+//                        final ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(LandingPageActivity.this);
+//
+//                        startActivity(i, options.toBundle());
+//
+//
+//                    }
+//                } else {
+//                    String snackBarMessage = "Api Limits exceeded or Server Error";
+//
+//                    showSnackbar(snackBarMessage);
+//                }
+//
+//            }
+//
+//            @Override
+//            public void onFailure(Call<RecipeMain> call, Throwable t) {
+//                mIdlingResource.setIdleState(true);
+//                mDialog.cancel();
+//                String snackBarMessag="ERROR LOADING RECIPE";
+//
+//                if(t instanceof ConnectException){
+//                    snackBarMessag = "Unable to connect please check internet";
+//                }
+//
+//                showSnackbar(snackBarMessag);
+//
+//
+//            }
+//        });
+//    }
 
     private void showSnackbar(String snackBarMessage) {
         Snackbar.make(mLandingPageBinding.coordinatorLayout, snackBarMessage, Snackbar.LENGTH_LONG).show();
@@ -300,4 +294,5 @@ public class LandingPageActivity extends AppCompatActivity implements Navigation
             imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
         }
     }
+
 }

@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.StrictMode;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.view.ViewCompat;
@@ -32,6 +31,8 @@ import com.precious.foodrecipe.databinding.ActivityMainBinding;
 import com.precious.foodrecipe.model.Constants;
 import com.precious.foodrecipe.model.ConstantsVariables;
 import com.precious.foodrecipe.model.EndlessRecyclerViewScrollListener;
+import com.precious.foodrecipe.model.FoodExecutor;
+import com.precious.foodrecipe.model.LoadBackgound;
 import com.precious.foodrecipe.model.RecipeMain;
 import com.precious.foodrecipe.services.RecipeService;
 import com.precious.foodrecipe.services.RecipeServiceBuilder;
@@ -44,7 +45,8 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class MainActivity extends AppCompatActivity implements RecipeListAdapter.CustomitemClickListener {
+public class MainActivity extends AppCompatActivity implements RecipeListAdapter.CustomitemClickListener,
+        LoadBackgound.LoadBackgoundCallBack {
 
     public static final String RECIPE_KEY = "RECIPE_KEY";
     public static final String CLICKED_ITEM = "CLICKED_ITEM";
@@ -145,11 +147,20 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
 
     private void loadBackground() {
 
-        RecipeMain recipeMain = (RecipeMain) getIntent().getParcelableExtra(MainActivity.RECIPE_KEY);
+        final String searchedItem = getIntent().getStringExtra(LandingPageActivity.SEARCHED_ITEM);
 
-        if (recipeMain != null) {
-            setupRecyclerView(recipeMain);
+        if (searchedItem != null) {
+
+            FoodExecutor.getInstance().getMainExecutor().execute(new Runnable() {
+                @Override
+                public void run() {
+                    LoadBackgound.loadBackground(searchedItem,
+                            MainActivity.this, 0, true);
+                }
+            });
+
         }
+
     }
 
     private void setupRecyclerView(final RecipeMain recipeMain) {
@@ -285,17 +296,17 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
 
                         if (loadMore) {
 
-                          Runnable runnable = new Runnable() {
-                              @Override
-                              public void run() {
-                                  int size = mRecipeMain.getHits().size();
-                                  for (int i = 0; i < size; i++) {
-                                      mListAdapter.addHitsItem(mRecipeMain.getHits().get(i));
-                                  }
-                              }
-                          };
+                            Runnable runnable = new Runnable() {
+                                @Override
+                                public void run() {
+                                    int size = mRecipeMain.getHits().size();
+                                    for (int i = 0; i < size; i++) {
+                                        mListAdapter.addHitsItem(mRecipeMain.getHits().get(i));
+                                    }
+                                }
+                            };
 
-                          runnable.run();
+                            runnable.run();
 
                             mBinding.loadMore.setVisibility(View.GONE);
 
@@ -361,4 +372,34 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
     }
 
 
-}
+    @Override
+    public void LoadisFinished(Response<RecipeMain> response, boolean loadMore) {
+
+        if (response.isSuccessful() && response.body() != null) {
+
+            mRecipeMain = response.body();
+
+            if (loadMore) {
+
+              FoodExecutor.getInstance().getMainExecutor().execute(new Runnable() {
+                  @Override
+                  public void run() {
+                      
+                      int size = mRecipeMain.getHits().size();
+                      for (int i = 0; i < size; i++) {
+                          mListAdapter.addHitsItem(mRecipeMain.getHits().get(i));
+                      }
+
+                  }
+              });
+
+                }
+            } else {
+
+                setupRecyclerView(response.body());
+            }
+
+        }
+
+    }
+
