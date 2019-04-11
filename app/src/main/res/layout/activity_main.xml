@@ -67,7 +67,7 @@
 
             <TextView
                 style="@style/LoadingMore"
-                android:text="Loading More"
+                android:text="Loading"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
 

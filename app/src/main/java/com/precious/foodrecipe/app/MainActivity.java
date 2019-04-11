@@ -1,11 +1,16 @@
 package com.precious.foodrecipe.app;
 
 import android.app.AlertDialog;
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProvider;
+import android.arch.lifecycle.ViewModelProviders;
+import android.arch.paging.PagedList;
 import android.content.Context;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.view.ViewCompat;
@@ -16,7 +21,6 @@ import android.support.v7.widget.SearchView;
 import android.transition.Slide;
 import android.transition.Transition;
 import android.transition.TransitionInflater;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -25,7 +29,7 @@ import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 
-import com.precious.foodrecipe.Adapter.RecipeListAdapter;
+import com.precious.foodrecipe.paging.RecipeListAdapter;
 import com.precious.foodrecipe.R;
 import com.precious.foodrecipe.databinding.ActivityMainBinding;
 import com.precious.foodrecipe.model.Constants;
@@ -34,19 +38,17 @@ import com.precious.foodrecipe.model.EndlessRecyclerViewScrollListener;
 import com.precious.foodrecipe.model.FoodExecutor;
 import com.precious.foodrecipe.model.LoadBackgound;
 import com.precious.foodrecipe.model.RecipeMain;
+import com.precious.foodrecipe.paging.RecipeViewModel;
+import com.precious.foodrecipe.paging.RecipeViewModelFactory;
 import com.precious.foodrecipe.services.RecipeService;
 import com.precious.foodrecipe.services.RecipeServiceBuilder;
 
-import java.io.IOException;
-import java.net.ConnectException;
-
 import dmax.dialog.SpotsDialog;
 import retrofit2.Call;
-import retrofit2.Callback;
 import retrofit2.Response;
 
-public class MainActivity extends AppCompatActivity implements RecipeListAdapter.CustomitemClickListener,
-        LoadBackgound.LoadBackgoundCallBack {
+public class MainActivity extends AppCompatActivity implements RecipeListAdapter.CustomitemClickListener
+     {
 
     public static final String RECIPE_KEY = "RECIPE_KEY";
     public static final String CLICKED_ITEM = "CLICKED_ITEM";
@@ -61,9 +63,10 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
     private RecipeMain mRecipeMain;
     private GridLayoutManager mLayoutManager;
     private String mTitle;
+         private RecipeListAdapter mAdapter;
 
 
-    @Override
+         @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
@@ -77,11 +80,13 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
 
         setupToolbars();
 
+        setupRecyclerView();
+
         loadBackground();
 
         setupWindowAnimation();
 
-        initEndlessScroll();
+
 //
 //        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
 //                .detectDiskReads()
@@ -94,20 +99,7 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
 
     }
 
-    private void initEndlessScroll() {
-        scrollListener = new EndlessRecyclerViewScrollListener(mLayoutManager) {
-            @Override
-            public void onLoadMore(int page, int totalItemsCount, RecyclerView view) {
 
-                int toRang = view.getAdapter().getItemCount();
-                mBinding.loadMore.setVisibility(View.VISIBLE);
-                requery(mTitle, toRang, true);
-
-            }
-        };
-
-        mBinding.recipeRecyclerView.addOnScrollListener(scrollListener);
-    }
 
     private void setupWindowAnimation() {
 
@@ -136,11 +128,6 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
         setSupportActionBar(mBinding.toolbarMain);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 
-        mDialog = new SpotsDialog.Builder()
-                .setContext(this)
-                .setMessage("Fetching recipe")
-                .setCancelable(false)
-                .build();
 
     }
 
@@ -151,34 +138,22 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
 
         if (searchedItem != null) {
 
-            FoodExecutor.getInstance().getMainExecutor().execute(new Runnable() {
-                @Override
-                public void run() {
-                    LoadBackgound.loadBackground(searchedItem,
-                            MainActivity.this, 0, true);
-                }
-            });
-
+           FoodExecutor.getInstance().getMainExecutor().execute(new Runnable() {
+               @Override
+               public void run() {
+                   requery(searchedItem, false);
+               }
+           });
         }
 
     }
 
-    private void setupRecyclerView(final RecipeMain recipeMain) {
+    private void setupRecyclerView() {
 
-        Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-                mListAdapter = new RecipeListAdapter(MainActivity.this, recipeMain.getHits(), MainActivity.this);
-                mLayoutManager = new GridLayoutManager(MainActivity.this, 2);
-
-
-                mBinding.recipeRecyclerView.setLayoutManager(mLayoutManager);
-                mBinding.recipeRecyclerView.setAdapter(mListAdapter);
-                mBinding.setHitList(recipeMain.getHits());
-            }
-        };
-
-        runnable.run();
+        mLayoutManager = new GridLayoutManager(this, 2);
+        mBinding.recipeRecyclerView.setLayoutManager(mLayoutManager);
+        mAdapter = new RecipeListAdapter(this, this);
+        mBinding.recipeRecyclerView.setAdapter(mAdapter);
     }
 
 
@@ -193,22 +168,20 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
 
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
             @Override
-            public boolean onQueryTextSubmit(String s) {
+            public boolean onQueryTextSubmit(final String query) {
                 hideKeyboard(getApplicationContext());
 
 
-                new Handler().postDelayed(new Runnable() {
+                getSupportActionBar().setTitle(query);
+
+
+                FoodExecutor.getInstance().getMainExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        mDialog.show();
+                        requery(query, true);
+
                     }
-                }, 1000);
-
-
-                requery(s, 0, false);
-
-                getSupportActionBar().setTitle(s);
-
+                });
 
                 return true;
             }
@@ -262,97 +235,33 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
     }
 
 
-    private void requery(final String s, final int fromRange, final boolean loadMore) {
+    private void requery(final String query, boolean newLoad) {
+             mBinding.loadMore.setVisibility(View.VISIBLE);
+
+        RecipeViewModelFactory factory = new RecipeViewModelFactory(query);
+
+        RecipeViewModel viewModel = ViewModelProviders.of(this, factory).get(RecipeViewModel.class);
 
 
-        RecipeService recipeService = RecipeServiceBuilder.buidService(RecipeService.class);
-
-
-        Call<RecipeMain> request = recipeService.searchRecicpe(
-                s,
-                ConstantsVariables.APP_ID,
-                ConstantsVariables.APP_KEY,
-                fromRange,
-                fromRange + 20
-
-
-        );
-
-
-        request.enqueue(new Callback<RecipeMain>() {
+        viewModel.getRecipePagedList(query).observe(this, new Observer<PagedList<RecipeMain.Hits>>() {
             @Override
-            public void onResponse(Call<RecipeMain> call, Response<RecipeMain> response) {
+            public void onChanged(@Nullable PagedList<RecipeMain.Hits> hits) {
 
-                mDialog.cancel();
-                scrollListener.resetState();
+                mAdapter.submitList(hits);
 
-                if (response.isSuccessful()) {
-                    if (response.body() != null) {
-
-                        mRecipeMain = response.body();
-
-                        response.toString();
-
-
-                        if (loadMore) {
-
-                            Runnable runnable = new Runnable() {
-                                @Override
-                                public void run() {
-                                    int size = mRecipeMain.getHits().size();
-                                    for (int i = 0; i < size; i++) {
-                                        mListAdapter.addHitsItem(mRecipeMain.getHits().get(i));
-                                    }
-                                }
-                            };
-
-                            runnable.run();
-
-                            mBinding.loadMore.setVisibility(View.GONE);
-
-                        } else {
-
-                            setupRecyclerView(mRecipeMain);
-                            initEndlessScroll();
-
-
-                        }
-                    }
-                } else if (response.code() > 200) {
-
-                    String snackBarMessage = "Api Limits exceeded or Server Error";
-
-                    showSnackbar(snackBarMessage);
-
+                if(mAdapter.getItemCount() != 0){
                     mBinding.loadMore.setVisibility(View.GONE);
                 }
 
-                response.code();
-
-
-            }
-
-            @Override
-            public void onFailure(Call<RecipeMain> call, Throwable t) {
-                Log.v("MainActivity", "instance of IOE Exception was received");
-                mBinding.loadMore.setVisibility(View.GONE);
-                mDialog.cancel();
-                scrollListener.resetState();
-
-                String snackBarMessag = "Error encountered";
-
-                if (t instanceof ConnectException) {
-                    snackBarMessag = "Unable to connect please check internet";
-                }
-
-                if (t instanceof IOException) {
-                    snackBarMessag = "IOE exception encountered";
-                }
-
-                showSnackbar(snackBarMessag);
-
             }
         });
+
+
+
+
+
+
+
 
 
     }
@@ -371,35 +280,6 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
         }
     }
 
-
-    @Override
-    public void LoadisFinished(Response<RecipeMain> response, boolean loadMore) {
-
-        if (response.isSuccessful() && response.body() != null) {
-
-            mRecipeMain = response.body();
-
-            if (loadMore) {
-
-              FoodExecutor.getInstance().getMainExecutor().execute(new Runnable() {
-                  @Override
-                  public void run() {
-                      
-                      int size = mRecipeMain.getHits().size();
-                      for (int i = 0; i < size; i++) {
-                          mListAdapter.addHitsItem(mRecipeMain.getHits().get(i));
-                      }
-
-                  }
-              });
-
-                }
-            } else {
-
-                setupRecyclerView(response.body());
-            }
-
-        }
 
     }
 
