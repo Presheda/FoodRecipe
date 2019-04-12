@@ -47,7 +47,7 @@
 
             <android.support.constraint.ConstraintLayout
                 android:background="@android:color/white"
-                android:layout_marginTop="5dp"
+
                 android:layout_width="fill_parent"
                 android:layout_height="30dp"
                 android:orientation="horizontal">
@@ -107,7 +107,6 @@
 
             <android.support.constraint.ConstraintLayout
                 android:background="@android:color/white"
-                android:layout_marginTop="5dp"
                 android:layout_width="fill_parent"
                 android:layout_height="30dp"
                 android:orientation="horizontal">

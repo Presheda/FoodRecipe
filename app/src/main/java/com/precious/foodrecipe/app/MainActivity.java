@@ -80,6 +80,14 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
 
         setupWindowAnimation();
 
+        mBinding.errorLoadingRetry.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mBinding.errorLayout.setVisibility(View.GONE);
+                requery(String.valueOf(getSupportActionBar().getTitle()), true);
+            }
+        });
+
 
 //
 //        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
@@ -227,8 +235,8 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
     }
 
 
-    private void requery(final String query, boolean newLoad) {
-
+    private void requery(final String query, final boolean newLoad) {
+        mBinding.errorLayout.setVisibility(View.GONE);
         mBinding.shimmerLayout.setVisibility(View.VISIBLE);
         mBinding.shimmerLayout.startShimmer();
 
@@ -237,30 +245,23 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
             mBinding.shimmerLayout.setVisibility(View.VISIBLE);
             mBinding.shimmerLayout.startShimmer();
         }
-
         RecipeViewModelFactory factory = new RecipeViewModelFactory(query);
         RecipeViewModel viewModel = ViewModelProviders.of(this, factory).get(RecipeViewModel.class);
-
-
-
-
         viewModel.getRecipePagedList(query).observe(this, new Observer<PagedList<RecipeMain.Hits>>() {
             @Override
             public void onChanged(@Nullable PagedList<RecipeMain.Hits> hits) {
-
                 if(hits != null){
+                    mAdapter.submitList(hits);
+                    mBinding.shimmerLayout.stopShimmer();
+                    mBinding.shimmerLayout.setVisibility(View.GONE);
                     if(hits.size() != 0){
-
-                        mAdapter.submitList(hits);
-
-                        mBinding.shimmerLayout.stopShimmer();
-                        mBinding.shimmerLayout.setVisibility(View.GONE);
+                        mBinding.errorLayout.setVisibility(View.GONE);
                         mBinding.recipeRecyclerView.setVisibility(View.VISIBLE);
+                    } else {
+                        mBinding.errorLayout.setVisibility(View.VISIBLE);
+                        mBinding.recipeRecyclerView.setVisibility(View.GONE);
                     }
                 }
-
-
-
             }
         });
 
