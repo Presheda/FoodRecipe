@@ -1,4 +1,4 @@
-package com.precious.foodrecipe.model;
+package com.precious.foodrecipe.IdlingResource;
 
 import android.support.test.espresso.IdlingResource;
 

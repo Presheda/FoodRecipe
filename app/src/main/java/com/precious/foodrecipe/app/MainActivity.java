@@ -11,7 +11,9 @@ import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.annotation.Nullable;
+import android.support.annotation.VisibleForTesting;
 import android.support.design.widget.Snackbar;
+import android.support.test.espresso.IdlingResource;
 import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -29,6 +31,7 @@ import android.view.Window;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ImageView;
 
+import com.precious.foodrecipe.IdlingResource.FoodRecipeIdlingResource;
 import com.precious.foodrecipe.paging.RecipeListAdapter;
 import com.precious.foodrecipe.R;
 import com.precious.foodrecipe.databinding.ActivityMainBinding;
@@ -71,6 +74,8 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
 
         mType = (Constants.AnimType) getIntent().getSerializableExtra(Constants.KEY_TYPE);
 
+        LandingPageActivity.mIdlingResource.setIdleState(false);
+
 
         setupToolbars();
 
@@ -89,6 +94,7 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
         });
 
 
+
 //
 //        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
 //                .detectDiskReads()
@@ -100,6 +106,8 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
 
 
     }
+
+
 
 
     private void setupWindowAnimation() {
@@ -236,6 +244,9 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
 
 
     private void requery(final String query, final boolean newLoad) {
+
+        LandingPageActivity.mIdlingResource.setIdleState(false);
+
         mBinding.errorLayout.setVisibility(View.GONE);
         mBinding.shimmerLayout.setVisibility(View.VISIBLE);
         mBinding.shimmerLayout.startShimmer();
@@ -251,6 +262,7 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
             @Override
             public void onChanged(@Nullable PagedList<RecipeMain.Hits> hits) {
                 if(hits != null){
+                    LandingPageActivity.mIdlingResource.setIdleState(true);
                     mAdapter.submitList(hits);
                     mBinding.shimmerLayout.stopShimmer();
                     mBinding.shimmerLayout.setVisibility(View.GONE);

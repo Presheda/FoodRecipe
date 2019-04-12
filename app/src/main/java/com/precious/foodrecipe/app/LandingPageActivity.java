@@ -1,6 +1,5 @@
 package com.precious.foodrecipe.app;
 
-import android.app.ActivityOptions;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
@@ -8,8 +7,6 @@ import android.databinding.DataBindingUtil;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
-import android.os.StrictMode;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
@@ -22,7 +19,6 @@ import android.support.v7.widget.SearchView;
 import android.transition.Slide;
 import android.transition.Transition;
 import android.transition.TransitionInflater;
-import android.util.Log;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
@@ -30,20 +26,9 @@ import android.view.inputmethod.InputMethodManager;
 
 import com.precious.foodrecipe.R;
 import com.precious.foodrecipe.databinding.ActivityLandingPageBinding;
-import com.precious.foodrecipe.model.ConstantsVariables;
-import com.precious.foodrecipe.model.FoodExecutor;
-import com.precious.foodrecipe.model.FoodRecipeIdlingResource;
-import com.precious.foodrecipe.model.LoadBackgound;
-import com.precious.foodrecipe.model.RecipeMain;
-import com.precious.foodrecipe.services.RecipeService;
-import com.precious.foodrecipe.services.RecipeServiceBuilder;
-
-import java.net.ConnectException;
+import com.precious.foodrecipe.IdlingResource.FoodRecipeIdlingResource;
 
 import dmax.dialog.SpotsDialog;
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 
 public class LandingPageActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener
 
@@ -53,7 +38,7 @@ public class LandingPageActivity extends AppCompatActivity implements Navigation
     public static final String SEARCHED_ITEM = "SEARCHED_ITEM";
     ActivityLandingPageBinding mLandingPageBinding;
     private AlertDialog mDialog;
-    private FoodRecipeIdlingResource mIdlingResource;
+    public static FoodRecipeIdlingResource mIdlingResource;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,13 +53,6 @@ public class LandingPageActivity extends AppCompatActivity implements Navigation
 
         visitEdamam();
 
-//        StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
-//                .detectDiskReads()
-//                .detectDiskWrites()
-//                .detectNetwork()
-//                .penaltyLog()
-//                .build()
-//        );
 
         getIdlingResource();
 
@@ -169,8 +147,6 @@ public class LandingPageActivity extends AppCompatActivity implements Navigation
 
                 hideKeyboard(getApplicationContext());
 
-
-
                final Intent intent = new Intent(LandingPageActivity.this, MainActivity.class);
                intent.putExtra(SEARCHED_ITEM, s);
                Handler handler = new Handler();
@@ -182,7 +158,7 @@ public class LandingPageActivity extends AppCompatActivity implements Navigation
                    }
                };
 
-               handler.postDelayed(r, 2000);
+               handler.postDelayed(r, 0);
 
 
 
