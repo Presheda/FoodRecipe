@@ -56,11 +56,10 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
     public static final String RECIPE_KEY = "RECIPE_KEY";
     public static final String EXTRA_PET_TRANSITION_NAME = "EXTRA_PET_TRANSITION_NAME";
     ActivityMainBinding mBinding;
-    private Constants.AnimType mType;
-    private RecipeMain mRecipeMain;
     private GridLayoutManager mLayoutManager;
     private String mTitle;
     private RecipeListAdapter mAdapter;
+    private FoodRecipeIdlingResource mIdlingResource;
 
 
     @Override
@@ -72,9 +71,7 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
         mBinding = DataBindingUtil.setContentView(this, R.layout.activity_main);
 
 
-        mType = (Constants.AnimType) getIntent().getSerializableExtra(Constants.KEY_TYPE);
-
-        LandingPageActivity.mIdlingResource.setIdleState(false);
+        getIdlingResource();
 
 
         setupToolbars();
@@ -108,6 +105,16 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
     }
 
 
+    @VisibleForTesting
+    @Nullable
+    public IdlingResource getIdlingResource(){
+
+        if(mIdlingResource == null){
+            mIdlingResource = new FoodRecipeIdlingResource();
+        }
+
+        return  mIdlingResource;
+    }
 
 
     private void setupWindowAnimation() {
@@ -146,6 +153,8 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
         final String searchedItem = getIntent().getStringExtra(LandingPageActivity.SEARCHED_ITEM);
 
         if (searchedItem != null) {
+
+            mIdlingResource.setIdleState(false);
             requery(searchedItem, false);
 
         }
@@ -179,16 +188,25 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
                 getSupportActionBar().setTitle(query);
 
 
-                Runnable r = new Runnable() {
-                    @Override
-                    public void run() {
-                        requery(query, true);
-                    }
-                };
 
-                Handler handler = new Handler();
 
-                handler.postDelayed(r, 2000);
+
+                mIdlingResource.setIdleState(false);
+
+                requery(query, true);
+
+//
+//                Runnable r = new Runnable() {
+//                    @Override
+//                    public void run() {
+//
+//
+//                    }
+//                };
+//
+//                Handler handler = new Handler();
+//
+//                handler.postDelayed(r, 2000);
 
 
                 return true;
@@ -245,7 +263,6 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
 
     private void requery(final String query, final boolean newLoad) {
 
-        LandingPageActivity.mIdlingResource.setIdleState(false);
 
         mBinding.errorLayout.setVisibility(View.GONE);
         mBinding.shimmerLayout.setVisibility(View.VISIBLE);
@@ -262,7 +279,7 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
             @Override
             public void onChanged(@Nullable PagedList<RecipeMain.Hits> hits) {
                 if(hits != null){
-                    LandingPageActivity.mIdlingResource.setIdleState(true);
+
                     mAdapter.submitList(hits);
                     mBinding.shimmerLayout.stopShimmer();
                     mBinding.shimmerLayout.setVisibility(View.GONE);
@@ -273,6 +290,18 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
                         mBinding.errorLayout.setVisibility(View.VISIBLE);
                         mBinding.recipeRecyclerView.setVisibility(View.GONE);
                     }
+
+
+                    Runnable r = new Runnable() {
+                        @Override
+                        public void run() {
+                            mIdlingResource.setIdleState(true);
+                        }
+                    };
+
+                    Handler handler = new Handler();
+
+                    handler.postDelayed(r, 1500);
                 }
             }
         });
@@ -294,6 +323,7 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
     protected void onResume() {
         super.onResume();
       //  mBinding.shimmerLayout.startShimmer();
+
     }
 
     @Override
