@@ -47,26 +47,20 @@ import dmax.dialog.SpotsDialog;
 import retrofit2.Call;
 import retrofit2.Response;
 
-public class MainActivity extends AppCompatActivity implements RecipeListAdapter.CustomitemClickListener
-     {
+public class MainActivity extends AppCompatActivity implements RecipeListAdapter.CustomitemClickListener,
+        RecipeListAdapter.CustomAdapterIsEmpty {
 
     public static final String RECIPE_KEY = "RECIPE_KEY";
-    public static final String CLICKED_ITEM = "CLICKED_ITEM";
     public static final String EXTRA_PET_TRANSITION_NAME = "EXTRA_PET_TRANSITION_NAME";
     ActivityMainBinding mBinding;
-    private RecipeListAdapter mListAdapter;
     private Constants.AnimType mType;
-    private AlertDialog mDialog;
-    private EndlessRecyclerViewScrollListener scrollListener;
-
-
     private RecipeMain mRecipeMain;
     private GridLayoutManager mLayoutManager;
     private String mTitle;
-         private RecipeListAdapter mAdapter;
+    private RecipeListAdapter mAdapter;
 
 
-         @Override
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
@@ -98,7 +92,6 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
 
 
     }
-
 
 
     private void setupWindowAnimation() {
@@ -137,13 +130,8 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
         final String searchedItem = getIntent().getStringExtra(LandingPageActivity.SEARCHED_ITEM);
 
         if (searchedItem != null) {
+            requery(searchedItem, false);
 
-           FoodExecutor.getInstance().getMainExecutor().execute(new Runnable() {
-               @Override
-               public void run() {
-                   requery(searchedItem, false);
-               }
-           });
         }
 
     }
@@ -152,7 +140,7 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
 
         mLayoutManager = new GridLayoutManager(this, 2);
         mBinding.recipeRecyclerView.setLayoutManager(mLayoutManager);
-        mAdapter = new RecipeListAdapter(this, this);
+        mAdapter = new RecipeListAdapter(this, this, this);
         mBinding.recipeRecyclerView.setAdapter(mAdapter);
     }
 
@@ -175,13 +163,17 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
                 getSupportActionBar().setTitle(query);
 
 
-                FoodExecutor.getInstance().getMainExecutor().execute(new Runnable() {
+                Runnable r = new Runnable() {
                     @Override
                     public void run() {
                         requery(query, true);
-
                     }
-                });
+                };
+
+                Handler handler = new Handler();
+
+                handler.postDelayed(r, 2000);
+
 
                 return true;
             }
@@ -236,38 +228,42 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
 
 
     private void requery(final String query, boolean newLoad) {
-             mBinding.loadMore.setVisibility(View.VISIBLE);
+
+        mBinding.shimmerLayout.setVisibility(View.VISIBLE);
+        mBinding.shimmerLayout.startShimmer();
+
+        if(newLoad){
+            mBinding.recipeRecyclerView.setVisibility(View.GONE);
+            mBinding.shimmerLayout.setVisibility(View.VISIBLE);
+            mBinding.shimmerLayout.startShimmer();
+        }
 
         RecipeViewModelFactory factory = new RecipeViewModelFactory(query);
-
         RecipeViewModel viewModel = ViewModelProviders.of(this, factory).get(RecipeViewModel.class);
+
+
 
 
         viewModel.getRecipePagedList(query).observe(this, new Observer<PagedList<RecipeMain.Hits>>() {
             @Override
             public void onChanged(@Nullable PagedList<RecipeMain.Hits> hits) {
 
-                mAdapter.submitList(hits);
+                if(hits != null){
+                    if(hits.size() != 0){
 
-                if(mAdapter.getItemCount() != 0){
-                    mBinding.loadMore.setVisibility(View.GONE);
+                        mAdapter.submitList(hits);
+
+                        mBinding.shimmerLayout.stopShimmer();
+                        mBinding.shimmerLayout.setVisibility(View.GONE);
+                        mBinding.recipeRecyclerView.setVisibility(View.VISIBLE);
+                    }
                 }
+
+
 
             }
         });
 
-
-
-
-
-
-
-
-
-    }
-
-    private void showSnackbar(String snackBarMessage) {
-        Snackbar.make(mBinding.coordinatorLayout, snackBarMessage, Snackbar.LENGTH_LONG).show();
     }
 
 
@@ -281,5 +277,25 @@ public class MainActivity extends AppCompatActivity implements RecipeListAdapter
     }
 
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+      //  mBinding.shimmerLayout.startShimmer();
     }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mBinding.shimmerLayout.stopShimmer();
+    }
+
+    @Override
+    public void isEmpty(boolean isEmpty) {
+
+        if(!isEmpty){
+            mBinding.recipeRecyclerView.setVisibility(View.VISIBLE);
+            mBinding.shimmerLayout.setVisibility(View.GONE);
+        }
+    }
+}
 

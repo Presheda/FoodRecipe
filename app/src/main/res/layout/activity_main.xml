@@ -17,14 +17,16 @@
     <android.support.design.widget.CoordinatorLayout
         android:id="@+id/coordinatorLayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        tools:context=".app.MainActivity"
+        >
 
 <android.support.constraint.ConstraintLayout
 
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/background"
-    tools:context=".app.MainActivity">
+    android:background="@color/background"
+    >
 
 
     <android.support.v7.widget.Toolbar
@@ -39,8 +41,30 @@
         app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
     </android.support.v7.widget.Toolbar>
 
+    <com.facebook.shimmer.ShimmerFrameLayout
+        shimmer_duration="500"
+        android:orientation="vertical"
+        android:layout_marginTop="?attr/actionBarSize"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/shimmerLayout"
+        >
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            >
+            <include layout="@layout/shimmer_place_holder" />
+            <include layout="@layout/shimmer_place_holder" />
+            <include layout="@layout/shimmer_place_holder" />
+        </LinearLayout>
+
+    </com.facebook.shimmer.ShimmerFrameLayout>
 
         <android.support.v7.widget.RecyclerView
+            android:scrollbarSize="1dp"
+            android:scrollbarStyle="insideInset"
+            android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             android:layout_marginTop="?attr/actionBarSize"
@@ -50,34 +74,6 @@
             android:layout_width="fill_parent"
             android:layout_height="match_parent"
             tools:listitem="@layout/recipe_item_list" />
-
-        <LinearLayout
-            android:id="@+id/loadMore"
-            android:visibility="gone"
-            android:gravity="center"
-            app:layout_constraintBottom_toBottomOf="@id/recipeRecyclerView"
-            android:background="@color/white"
-            android:orientation="horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <ProgressBar
-                android:layout_width="35dp"
-                android:layout_height="35dp" />
-
-            <TextView
-                style="@style/LoadingMore"
-                android:text="Loading"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-
-        </LinearLayout>
-
-
-
-
-
-
 
 </android.support.constraint.ConstraintLayout>
 

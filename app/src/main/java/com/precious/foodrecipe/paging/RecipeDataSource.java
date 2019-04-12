@@ -8,6 +8,8 @@ import com.precious.foodrecipe.model.RecipeMain;
 import com.precious.foodrecipe.services.RecipeService;
 import com.precious.foodrecipe.services.RecipeServiceBuilder;
 
+import java.io.IOException;
+
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -38,29 +40,25 @@ public class RecipeDataSource extends PageKeyedDataSource<Integer, RecipeMain.Hi
                 toRange
         );
 
-        request.enqueue(new Callback<RecipeMain>() {
-            @Override
-            public void onResponse(Call<RecipeMain> call, Response<RecipeMain> response) {
-                if(response.code() == 200 && response.body() != null){
-                    fromRange = fromRange + 20;
-                    toRange = toRange + 20;
-                    callback.onResult(response.body().getHits(), null, fromRange);
-                }
+
+        try {
+
+            Response<RecipeMain> response = request.execute();
+            if (response.code() == 200 && response.body() != null) {
+                fromRange = fromRange + 20;
+                toRange = toRange + 20;
+                callback.onResult(response.body().getHits(), null, fromRange);
             }
 
-            @Override
-            public void onFailure(Call<RecipeMain> call, Throwable throwable) {
+        } catch (IOException e) {
 
-                callback.onResult(null, null, null);
-            }
-        });
+        }
+
     }
 
     @Override
     public void loadBefore(@NonNull LoadParams<Integer> params, @NonNull final LoadCallback<Integer,
             RecipeMain.Hits> callback) {
-
-
 
 
         RecipeService recipeService = RecipeServiceBuilder.buidService(RecipeService.class);
@@ -73,29 +71,18 @@ public class RecipeDataSource extends PageKeyedDataSource<Integer, RecipeMain.Hi
                 toRange
         );
 
-        request.enqueue(new Callback<RecipeMain>() {
-            @Override
-            public void onResponse(Call<RecipeMain> call, Response<RecipeMain> response) {
 
-                if(response.code() == 200 && response.body() != null){
-
-                    if(fromRange > 20){
-                        fromRange  =- 20;
-                        toRange = -20;
-                    }
-
-                    callback.onResult(response.body().getHits(),  fromRange);
+        try {
+            Response<RecipeMain> response = request.execute();
+            if (response.code() == 200 && response.body() != null) {
+                if (fromRange > 20) {
+                    fromRange = -20;
+                    toRange = -20;
                 }
-
+                callback.onResult(response.body().getHits(), fromRange);
             }
-
-            @Override
-            public void onFailure(Call<RecipeMain> call, Throwable throwable) {
-
-                callback.onResult(null, null);
-            }
-        });
-
+        } catch (IOException e) {
+        }
 
     }
 
@@ -104,7 +91,6 @@ public class RecipeDataSource extends PageKeyedDataSource<Integer, RecipeMain.Hi
                           @NonNull final LoadCallback<Integer, RecipeMain.Hits> callback) {
 
 
-
         RecipeService recipeService = RecipeServiceBuilder.buidService(RecipeService.class);
 
         Call<RecipeMain> request = recipeService.searchRecicpe(
@@ -115,23 +101,17 @@ public class RecipeDataSource extends PageKeyedDataSource<Integer, RecipeMain.Hi
                 toRange
         );
 
-
-        request.enqueue(new Callback<RecipeMain>() {
-            @Override
-            public void onResponse(Call<RecipeMain> call, Response<RecipeMain> response) {
-                if(response.code() == 200 && response.body() != null){
-                    fromRange = fromRange + 20;
-                    toRange = toRange + 20;
-                    callback.onResult(response.body().getHits(),  fromRange);
-                }
+        try {
+            Response<RecipeMain> response = request.execute();
+            if (response.code() == 200 && response.body() != null) {
+                fromRange = fromRange + 20;
+                toRange = toRange + 20;
+                callback.onResult(response.body().getHits(), fromRange);
             }
+        } catch (IOException e){
 
-            @Override
-            public void onFailure(Call<RecipeMain> call, Throwable throwable) {
+        }
 
-                callback.onResult(null, null);
-            }
-        });
 
 
     }

@@ -49,8 +49,8 @@ public class RecipeDetailActivity extends AppCompatActivity {
 
         mBinding.imageViewDetail.setTransitionName(extras.getString(MainActivity.EXTRA_PET_TRANSITION_NAME));
         RequestOptions options  = new RequestOptions()
-                .placeholder(R.drawable.ic_launcher_background)
-                .error(R.drawable.ic_launcher_background);
+                .placeholder(R.drawable.glide_background)
+                .error(R.drawable.glide_background);
 
         Glide.with(this)
                 .setDefaultRequestOptions(options)

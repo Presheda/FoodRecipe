@@ -44,8 +44,8 @@ public class ItemListBinding {
        final Context context  = imageView.getContext();
 
        final RequestOptions options  = new RequestOptions()
-                .placeholder(R.drawable.ic_launcher_background)
-                .error(R.drawable.ic_launcher_background);
+                .placeholder(R.drawable.glide_background)
+                .error(R.drawable.glide_background);
 
 
        Runnable runnable = new Runnable() {

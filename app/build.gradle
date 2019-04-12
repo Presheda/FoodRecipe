@@ -68,6 +68,10 @@ dependencies {
     //adding paging
     implementation "android.arch.paging:runtime:$paging_version"
 
+    //facebook shimmereffect
+    implementation 'com.facebook.shimmer:shimmer:0.4.0'
+
+
 
     //glide
     implementation 'com.github.bumptech.glide:glide:4.4.0'

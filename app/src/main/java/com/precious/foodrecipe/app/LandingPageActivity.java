@@ -171,9 +171,18 @@ public class LandingPageActivity extends AppCompatActivity implements Navigation
 
 
 
-               Intent intent = new Intent(LandingPageActivity.this, MainActivity.class);
+               final Intent intent = new Intent(LandingPageActivity.this, MainActivity.class);
                intent.putExtra(SEARCHED_ITEM, s);
-               startActivity(intent);
+               Handler handler = new Handler();
+
+               Runnable r = new Runnable() {
+                   @Override
+                   public void run() {
+                       startActivity(intent);
+                   }
+               };
+
+               handler.postDelayed(r, 2000);
 
 
 

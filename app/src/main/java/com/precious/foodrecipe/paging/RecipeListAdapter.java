@@ -29,18 +29,24 @@ public class RecipeListAdapter extends PagedListAdapter<RecipeMain.Hits, RecipeL
 
     CustomitemClickListener mCustomitemClickListener;
 
-    public RecipeListAdapter(Context context, CustomitemClickListener customitemClickListener) {
+    CustomAdapterIsEmpty mCustomAdapterIsEmpty;
+
+    public RecipeListAdapter(Context context, CustomitemClickListener customitemClickListener,
+                             CustomAdapterIsEmpty customAdapterIsEmpty
+                             ) {
         super(DIFF_CALLBACK);
         this.context = context;
         mCustomitemClickListener = customitemClickListener;
+        mCustomAdapterIsEmpty = customAdapterIsEmpty;
     }
 
     public interface CustomitemClickListener {
         void onClick(RecipeMain.Recipe itemRecipe, ImageView imageView);
-
-
     }
 
+    public interface CustomAdapterIsEmpty {
+        void isEmpty(boolean isEmpty);
+    }
 
 
     @NonNull
@@ -52,8 +58,6 @@ public class RecipeListAdapter extends PagedListAdapter<RecipeMain.Hits, RecipeL
 
         return new RecipeViewHolder(listBinding.getRoot());
 
-
-
     }
 
     @Override
@@ -61,28 +65,26 @@ public class RecipeListAdapter extends PagedListAdapter<RecipeMain.Hits, RecipeL
 
         final RecipeMain.Recipe recipe = getItem(i).getRecipe();
 
-       if(recipe != null){
-           recipeViewHolder.mItemListBinding.setRecipe(recipe);
-           recipeViewHolder.mItemListBinding.setVariable(BR.recipe, recipe);
+        if (recipe != null) {
+            recipeViewHolder.mItemListBinding.setRecipe(recipe);
+            recipeViewHolder.mItemListBinding.setVariable(BR.recipe, recipe);
 
-           String recipeName = recipeViewHolder.mItemListBinding.recipeName.getText().toString();
+            String recipeName = recipeViewHolder.mItemListBinding.recipeName.getText().toString();
 
-           ViewCompat.setTransitionName(recipeViewHolder.mItemListBinding.recipeImage, recipeName);
+            ViewCompat.setTransitionName(recipeViewHolder.mItemListBinding.recipeImage, recipeName);
 
-           recipeViewHolder.mItemListBinding.recipeContainer.setOnClickListener(new View.OnClickListener() {
-               @Override
-               public void onClick(View view) {
+            recipeViewHolder.mItemListBinding.recipeContainer.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
 
-                   mCustomitemClickListener.onClick(recipeViewHolder.mItemListBinding.getRecipe(),
-                           recipeViewHolder.mItemListBinding.recipeImage);
-               }
-           });
-
-
+                    mCustomitemClickListener.onClick(recipeViewHolder.mItemListBinding.getRecipe(),
+                            recipeViewHolder.mItemListBinding.recipeImage);
+                }
+            });
 
 
-           recipeViewHolder.mItemListBinding.executePendingBindings();
-       }
+            recipeViewHolder.mItemListBinding.executePendingBindings();
+        }
 
     }
 
@@ -98,17 +100,21 @@ public class RecipeListAdapter extends PagedListAdapter<RecipeMain.Hits, RecipeL
         }
     };
 
-    class RecipeViewHolder extends RecyclerView.ViewHolder  {
+    class RecipeViewHolder extends RecyclerView.ViewHolder {
 
         RecipeItemListBinding mItemListBinding;
 
         public RecipeViewHolder(@NonNull View itemView) {
             super(itemView);
             mItemListBinding = DataBindingUtil.getBinding(itemView);
-
-
         }
 
+    }
+
+    public void checkIfEmpty() {
+        if (getItemCount() > 0) {
+            mCustomAdapterIsEmpty.isEmpty(false);
+        }
     }
 
 }

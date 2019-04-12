@@ -27,7 +27,8 @@
             android:layout_width="fill_parent"
             android:layout_height="180dp"
             android:scaleType="centerCrop"
-            android:src="@drawable/black_shirt_male" />
+            android:src="@drawable/glide_background"
+             />
 
 
         <TextView
